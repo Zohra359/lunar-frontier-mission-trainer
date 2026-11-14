@@ -1,31 +1,16 @@
+
 "use client";
 
-import Link from "next/link";
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
-import type { ReactNode } from "react";
+import { useSyncExternalStore } from "react";
+import { BeginMissionButton } from "@/components/layout/BeginMissionButton";
+import { Button } from "@/components/ui/Button";
+import { ProgressBar } from "@/components/ui/ProgressBar";
+import { SectionHeading } from "@/components/ui/SectionHeading";
+import { StatusBadge } from "@/components/ui/StatusIndicator";
 
 /* -------------------------------------------------------------------------- */
-/*  Configuration                                                             */
+/*  Content                                                                   */
 /* -------------------------------------------------------------------------- */
-
-/**
- * Set this to the route of your game once it exists (e.g. "/mission").
- * While it is null, the "BEGIN YOUR MISSION" buttons open an honest
- * "simulator not yet online" notice instead of linking to a missing page.
- */
-const MISSION_START_HREF = null as string | null;
-
-const NAV_LINKS = [
-  { href: "#mission", label: "Objectives" },
-  { href: "#environment", label: "Environment" },
-  { href: "#status", label: "Status" },
-] as const;
 
 const OBJECTIVES = [
   {
@@ -109,12 +94,6 @@ const ENVIRONMENT_STATS = [
   },
 ] as const;
 
-const SIMULATOR_MODULES = [
-  { name: "Landing page and mission briefing", status: "Online", live: true },
-  { name: "Mission simulator", status: "Planned", live: false },
-  { name: "Crew and resource systems", status: "Planned", live: false },
-] as const;
-
 /* -------------------------------------------------------------------------- */
 /*  Small hooks                                                               */
 /* -------------------------------------------------------------------------- */
@@ -132,164 +111,6 @@ function useUtcClock() {
     subscribeToClock,
     getClockSnapshot,
     getClockServerSnapshot,
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/*  Shared UI                                                                 */
-/* -------------------------------------------------------------------------- */
-
-function LogoMark({ className = "h-7 w-7" }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 32 32"
-      fill="none"
-      className={className}
-      aria-hidden="true"
-    >
-      <circle cx="16" cy="16" r="9.5" stroke="currentColor" strokeWidth="1.4" />
-      <path
-        d="M21.5 8.6a8.2 8.2 0 1 0 0 14.8 6.6 6.6 0 0 1 0-14.8Z"
-        fill="currentColor"
-        opacity="0.9"
-      />
-      <ellipse
-        cx="16"
-        cy="16"
-        rx="14.5"
-        ry="5.2"
-        transform="rotate(-24 16 16)"
-        stroke="currentColor"
-        strokeWidth="0.9"
-        opacity="0.6"
-      />
-    </svg>
-  );
-}
-
-function ArrowIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M4 12h15M13 6l6 6-6 6" />
-    </svg>
-  );
-}
-
-function SectionHeading({
-  eyebrow,
-  title,
-  children,
-}: {
-  eyebrow: string;
-  title: string;
-  children?: ReactNode;
-}) {
-  return (
-    <div className="max-w-2xl">
-      <p className="mb-4 flex items-center gap-3 font-mono text-[0.68rem] uppercase tracking-[0.3em] text-signal">
-        <span className="h-px w-8 bg-signal/60" />
-        {eyebrow}
-      </p>
-      <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl lg:text-[2.75rem] lg:leading-[1.1]">
-        {title}
-      </h2>
-      {children ? (
-        <p className="mt-5 text-base leading-relaxed text-slate-400 sm:text-lg">
-          {children}
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
-function BeginButton({
-  onBegin,
-  label = "BEGIN YOUR MISSION",
-  variant = "solid",
-  showArrow = true,
-}: {
-  onBegin: () => void;
-  label?: string;
-  variant?: "solid" | "outline";
-  showArrow?: boolean;
-}) {
-  const base =
-    "group inline-flex items-center justify-center gap-3 rounded-sm font-semibold uppercase transition-colors duration-200";
-  const styles =
-    variant === "solid"
-      ? "bg-signal px-7 py-4 text-[0.78rem] tracking-[0.24em] text-void shadow-[0_0_40px_-10px_rgba(111,211,255,0.8)] hover:bg-white"
-      : "border border-signal/40 px-4 py-2 text-[0.68rem] tracking-[0.22em] text-signal hover:bg-signal hover:text-void";
-  const classes = `${base} ${styles}`;
-  const content = (
-    <>
-      {label}
-      {showArrow ? <ArrowIcon /> : null}
-    </>
-  );
-
-  if (MISSION_START_HREF) {
-    return (
-      <Link href={MISSION_START_HREF} className={classes}>
-        {content}
-      </Link>
-    );
-  }
-  return (
-    <button type="button" onClick={onBegin} className={classes}>
-      {content}
-    </button>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/*  Header                                                                    */
-/* -------------------------------------------------------------------------- */
-
-function SiteHeader({ onBegin }: { onBegin: () => void }) {
-  return (
-    <header className="fixed inset-x-0 top-0 z-40 border-b border-white/5 bg-void/60 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8">
-        <a href="#top" className="flex items-center gap-3 text-signal">
-          <LogoMark />
-          <span className="flex flex-col leading-none">
-            <span className="text-[0.82rem] font-semibold tracking-[0.32em] text-white">
-              LUNAR FRONTIER
-            </span>
-            <span className="mt-1 hidden font-mono text-[0.55rem] uppercase tracking-[0.28em] text-mist sm:block">
-              Junior Astronaut Mission Trainer
-            </span>
-          </span>
-        </a>
-
-        <nav aria-label="Primary" className="hidden items-center gap-9 md:flex">
-          {NAV_LINKS.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="text-[0.7rem] font-medium uppercase tracking-[0.22em] text-mist transition-colors hover:text-white"
-            >
-              {link.label}
-            </a>
-          ))}
-        </nav>
-
-        <BeginButton
-          onBegin={onBegin}
-          label="Begin"
-          variant="outline"
-          showArrow={false}
-        />
-      </div>
-    </header>
   );
 }
 
@@ -482,38 +303,6 @@ function LunarScene() {
 /*  Mission status panel                                                      */
 /* -------------------------------------------------------------------------- */
 
-function ResourceBar({
-  label,
-  value,
-  tone = "signal",
-}: {
-  label: string;
-  value: number;
-  tone?: "signal" | "ember";
-}) {
-  return (
-    <div>
-      <div className="mb-1.5 flex justify-between text-[0.66rem] uppercase tracking-[0.2em]">
-        <span className="text-mist">{label}</span>
-        <span className="font-mono tabular-nums text-white">{value}%</span>
-      </div>
-      <div
-        role="progressbar"
-        aria-label={label}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={value}
-        className="h-1 w-full bg-white/10"
-      >
-        <div
-          className={`h-full ${tone === "ember" ? "bg-ember" : "bg-signal"}`}
-          style={{ width: `${value}%` }}
-        />
-      </div>
-    </div>
-  );
-}
-
 function MissionStatusPanel() {
   const utc = useUtcClock();
   const rows: Array<[string, string]> = [
@@ -537,9 +326,7 @@ function MissionStatusPanel() {
           </span>
           Mission Status
         </h2>
-        <span className="rounded-sm border border-ember/40 px-2 py-0.5 font-mono text-[0.58rem] uppercase tracking-[0.2em] text-ember">
-          Preview
-        </span>
+        <StatusBadge tone="ember">Preview</StatusBadge>
       </div>
 
       <dl className="mt-4">
@@ -557,10 +344,10 @@ function MissionStatusPanel() {
       </dl>
 
       <div className="mt-5 space-y-4">
-        <ResourceBar label="Power" value={82} />
-        <ResourceBar label="Oxygen" value={94} />
-        <ResourceBar label="Water" value={67} />
-        <ResourceBar label="Crew morale" value={41} tone="ember" />
+        <ProgressBar label="Power" value={82} />
+        <ProgressBar label="Oxygen" value={94} />
+        <ProgressBar label="Water" value={67} />
+        <ProgressBar label="Crew morale" value={41} tone="ember" />
       </div>
 
       <p className="mt-5 border-t border-white/5 pt-3 font-mono text-[0.6rem] uppercase leading-relaxed tracking-[0.18em] text-mist">
@@ -574,7 +361,7 @@ function MissionStatusPanel() {
 /*  Hero                                                                      */
 /* -------------------------------------------------------------------------- */
 
-function Hero({ onBegin }: { onBegin: () => void }) {
+function Hero() {
   return (
     <section id="top" className="relative isolate overflow-hidden bg-void">
       <div aria-hidden="true" className="hero-glow absolute inset-0 z-0" />
@@ -604,17 +391,14 @@ function Hero({ onBegin }: { onBegin: () => void }) {
           </p>
 
           <div className="fade-up delay-4 mt-9 flex flex-col gap-4 sm:flex-row">
-            <BeginButton onBegin={onBegin} />
-            <a
-              href="#mission"
-              className="inline-flex items-center justify-center rounded-sm border border-white/25 px-7 py-4 text-[0.78rem] font-semibold uppercase tracking-[0.24em] text-white transition-colors duration-200 hover:border-signal hover:text-signal"
-            >
+            <BeginMissionButton size="lg" showArrow />
+            <Button href="#mission" variant="secondary" size="lg">
               EXPLORE THE MISSION
-            </a>
+            </Button>
           </div>
 
           <p className="fade-up delay-4 mt-5 font-mono text-[0.62rem] uppercase tracking-[0.22em] text-mist">
-            Mission briefing available now · Simulator in development
+            Mission overview available below · Simulator in development
           </p>
         </div>
 
@@ -744,7 +528,7 @@ function EnvironmentSection() {
   );
 }
 
-function CallToAction({ onBegin }: { onBegin: () => void }) {
+function CallToAction() {
   return (
     <section className="border-t border-line bg-void">
       <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-8 px-5 py-16 sm:px-8 md:flex-row md:items-center">
@@ -756,215 +540,24 @@ function CallToAction({ onBegin }: { onBegin: () => void }) {
             Your crew is counting on the decisions you make.
           </p>
         </div>
-        <BeginButton onBegin={onBegin} />
+        <BeginMissionButton size="lg" showArrow />
       </div>
     </section>
   );
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Footer                                                                    */
-/* -------------------------------------------------------------------------- */
-
-function SiteFooter() {
-  return (
-    <footer className="border-t border-line bg-deep">
-      <div className="mx-auto grid max-w-7xl gap-10 px-5 py-14 sm:px-8 md:grid-cols-12">
-        <div className="md:col-span-6">
-          <div className="flex items-center gap-3 text-signal">
-            <LogoMark className="h-6 w-6" />
-            <span className="text-[0.8rem] font-semibold tracking-[0.32em] text-white">
-              LUNAR FRONTIER
-            </span>
-          </div>
-          <p className="mt-4 max-w-md text-sm leading-relaxed text-slate-400">
-            An educational mission-management game about living and working on
-            the Moon, created for the NASA Space Apps Challenge 2026.
-          </p>
-        </div>
-
-        <nav aria-label="Footer" className="md:col-span-3">
-          <h3 className="font-mono text-[0.62rem] uppercase tracking-[0.26em] text-mist">
-            Navigate
-          </h3>
-          <ul className="mt-4 space-y-3 text-sm">
-            {NAV_LINKS.map((link) => (
-              <li key={link.href}>
-                <a
-                  href={link.href}
-                  className="text-slate-300 transition-colors hover:text-signal"
-                >
-                  {link.label}
-                </a>
-              </li>
-            ))}
-            <li>
-              <a
-                href="#top"
-                className="text-slate-300 transition-colors hover:text-signal"
-              >
-                Back to top
-              </a>
-            </li>
-          </ul>
-        </nav>
-
-        <div className="md:col-span-3">
-          <h3 className="font-mono text-[0.62rem] uppercase tracking-[0.26em] text-mist">
-            Reference
-          </h3>
-          <ul className="mt-4 space-y-3 text-sm">
-            <li>
-              <a
-                href="https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-slate-300 transition-colors hover:text-signal"
-              >
-                NASA Moon Fact Sheet ↗
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      <div className="border-t border-line">
-        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-6 text-xs text-mist sm:px-8 md:flex-row md:items-center md:justify-between">
-          <p>© 2026 Lunar Frontier. All rights reserved.</p>
-          <p className="max-w-xl leading-relaxed md:text-right">
-            Independent educational project. Not affiliated with, sponsored by
-            or endorsed by NASA.
-          </p>
-        </div>
-      </div>
-    </footer>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/*  "Not yet online" dialog                                                   */
-/* -------------------------------------------------------------------------- */
-
-function MissionNoticeDialog({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) {
-  const closeRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const previouslyFocused = document.activeElement as HTMLElement | null;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    closeRef.current?.focus();
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKeyDown);
-
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = previousOverflow;
-      previouslyFocused?.focus();
-    };
-  }, [open, onClose]);
-
-  if (!open) return null;
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-5"
-      role="presentation"
-    >
-      <div
-        className="absolute inset-0 bg-void/80 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="mission-notice-title"
-        className="glass-panel hud-corners fade-up relative w-full max-w-lg rounded-sm p-6 sm:p-8"
-      >
-        <p className="font-mono text-[0.62rem] uppercase tracking-[0.3em] text-ember">
-          Mission Control Notice
-        </p>
-        <h2
-          id="mission-notice-title"
-          className="mt-3 text-2xl font-semibold tracking-wide text-white"
-        >
-          The simulator is not yet online
-        </h2>
-        <p className="mt-3 text-sm leading-relaxed text-slate-300">
-          This landing page is the first module of Lunar Frontier. Mission
-          gameplay will unlock in a future build. Review the mission objectives
-          to see what your command will involve.
-        </p>
-
-        <ul className="mt-6 divide-y divide-white/5 border-y border-white/5">
-          {SIMULATOR_MODULES.map((m) => (
-            <li
-              key={m.name}
-              className="flex items-center justify-between py-3 text-sm"
-            >
-              <span className="text-slate-200">{m.name}</span>
-              <span
-                className={`font-mono text-[0.6rem] uppercase tracking-[0.2em] ${
-                  m.live ? "text-signal" : "text-mist"
-                }`}
-              >
-                {m.status}
-              </span>
-            </li>
-          ))}
-        </ul>
-
-        <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-          <a
-            href="#mission"
-            onClick={onClose}
-            className="inline-flex items-center justify-center rounded-sm bg-signal px-5 py-3 text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-void transition-colors hover:bg-white"
-          >
-            View objectives
-          </a>
-          <button
-            ref={closeRef}
-            type="button"
-            onClick={onClose}
-            className="inline-flex items-center justify-center rounded-sm border border-white/25 px-5 py-3 text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-white transition-colors hover:border-signal hover:text-signal"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
 /*  Page                                                                      */
+/*  Header, footer and the "not yet online" dialog now come from layout.tsx.  */
 /* -------------------------------------------------------------------------- */
 
 export default function Home() {
-  const [noticeOpen, setNoticeOpen] = useState(false);
-  const openNotice = useCallback(() => setNoticeOpen(true), []);
-  const closeNotice = useCallback(() => setNoticeOpen(false), []);
-
   return (
-    <div className="min-h-screen bg-void text-slate-200">
-      <SiteHeader onBegin={openNotice} />
-      <main>
-        <Hero onBegin={openNotice} />
-        <ObjectivesSection />
-        <EnvironmentSection />
-        <CallToAction onBegin={openNotice} />
-      </main>
-      <SiteFooter />
-      <MissionNoticeDialog open={noticeOpen} onClose={closeNotice} />
-    </div>
+    <main id="main" className="bg-void text-slate-200">
+      <Hero />
+      <ObjectivesSection />
+      <EnvironmentSection />
+      <CallToAction />
+    </main>
   );
 }
