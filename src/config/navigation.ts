@@ -6,7 +6,7 @@ export const SITE_NAME = "LUNAR FRONTIER";
  * button opens the honest "simulator not yet online" notice instead of
  * linking to an unfinished page.
  */
-export const MISSION_START_HREF = null as string | null;
+export const MISSION_START_HREF = "/mission-control";
 
 export type ModuleStatus = "online" | "planned";
 

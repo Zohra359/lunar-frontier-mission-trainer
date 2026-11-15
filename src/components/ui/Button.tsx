@@ -86,7 +86,7 @@ export function Button({
   );
 
   if (href) {
-    if (/^https?:\/\//.test(href)) {
+    if (/^https?:\/\//i.test(href))  {
       return (
         <a
           href={href}
